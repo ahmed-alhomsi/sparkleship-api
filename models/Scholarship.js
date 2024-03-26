@@ -82,7 +82,8 @@ const ScholarshipSchema = new mongoose.Schema({
         type: String,
         enum: ["highschool", "bachelor's", "master's", "phd"],
         default: "bachelor's"
-    }
+    },
+    nationalities: [{type: String}]
 })
 
 module.exports = mongoose.model('Scholarship', ScholarshipSchema)

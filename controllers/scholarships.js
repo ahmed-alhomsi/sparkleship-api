@@ -3,60 +3,70 @@ const {StatusCodes} = require('http-status-codes')
 const {BadRequestError, NotFoundError} = require('../errors')
 
 const getAllScholarships = async(req, res) => {
-    const { title, providedBy, fieldOfStudy, requiredDegree, applyDate, deadline, gpa, isArchived, languageTest, languageLevelLetter, funding } = req.query
+    const { title, providedBy, fieldOfStudy, requiredDegree, applyDate, deadline, gpa, isArchived, languageTest, languageLevelLetter, funding, sort, fields } = req.query
     const queryObject = {}
     let englishLevel = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
     if(title) {
         queryObject.title = {$regex: title, $options: "i" }
     }
-
     if(providedBy) {
         queryObject.providedBy = {$regex: providedBy, $options: "i" }
     }
-    
     if(fieldOfStudy) {
         queryObject.fieldOfStudy = {$regex: fieldOfStudy, $options: "i" }
     }
-    
     if(requiredDegree) {
         queryObject.requiredDegree = {$regex: requiredDegree, $options: "i" }
     }
-    
     if(applyDate) {
         queryObject.applyDate = new Date(applyDate)
     }
-
     if(deadline) {
         queryObject.deadline = new Date(deadline)
     }
-    
     if(gpa) {
         // get all the scholarships that match the students GPA, plus all the ones that are less than it (basically all scholarships that qualify)
         queryObject.minimumGPA = {$lte: parseFloat(gpa)}
     }
-    
     if(isArchived) {
         queryObject.isArchived = isArchived === 'true' ? true : false
     }
-
     if(languageTest) {
         queryObject.languageTest = languageTest
     }
-
     if(languageLevelLetter) {
         // queryObject.languageLevelLetter = languageLevelLetter
         let numOfLevels = englishLevel.indexOf(languageLevelLetter) + 1
         englishLevel.splice(numOfLevels)
     }
-
     if(funding) {
         queryObject.funding = funding
     }
 
-    console.log(queryObject)
+    // console.log(queryObject)
 
-    const scholarships = await Scholarship.find(queryObject).where('languageLevelLetter').in(englishLevel).sort("createdAt")
+    let result = Scholarship.find(queryObject).where('languageLevelLetter').in(englishLevel)
+
+    if(sort) {
+        const sortList = sort.split(",").join(" ")
+        result = result.sort(sortList)
+    } else {
+        result = result.sort("createdAt")
+    }
+    if(fields) {
+        const fieldsList = fields.split(",").join(" ")
+        result = result.select(fieldsList)
+    }
+
+    // pagination & limiting number of scholarships returned
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    result = result.skip(skip).limit(limit)
+
+    const scholarships = await result
     res.status(StatusCodes.OK).json({scholarships, count: scholarships.length})
 }
 
@@ -64,59 +74,46 @@ const getAllScholarshipApplications = async(req, res) => {
     const studentID = req.user.userID
 
     // new for filteration:
-    const { title, providedBy, fieldOfStudy, requiredDegree, applyDate, deadline, gpa, isArchived, languageTest, languageLevelLetter, funding } = req.query
+    const { title, providedBy, fieldOfStudy, requiredDegree, applyDate, deadline, gpa, isArchived, languageTest, languageLevelLetter, funding, sort, fields } = req.query
     const queryObject = {}
     let englishLevel = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
     if(title) {
         queryObject.title = {$regex: title, $options: "i" }
     }
-
     if(providedBy) {
         queryObject.providedBy = {$regex: providedBy, $options: "i" }
     }
-    
     if(fieldOfStudy) {
         queryObject.fieldOfStudy = {$regex: fieldOfStudy, $options: "i" }
     }
-    
     if(requiredDegree) {
         queryObject.requiredDegree = {$regex: requiredDegree, $options: "i" }
     }
-    
     if(applyDate) {
         queryObject.applyDate = new Date(applyDate)
     }
-
     if(deadline) {
         queryObject.deadline = new Date(deadline)
     }
-    
     if(gpa) {
         // get all the scholarships that match the students GPA, plus all the ones that are less than it (basically all scholarships that qualify)
         queryObject.minimumGPA = {$lte: parseFloat(gpa)}
     }
-    
     if(isArchived) {
         queryObject.isArchived = isArchived === 'true' ? true : false
     }
-
     if(languageTest) {
         queryObject.languageTest = languageTest
     }
-
     if(languageLevelLetter) {
         // queryObject.languageLevelLetter = languageLevelLetter
         let numOfLevels = englishLevel.indexOf(languageLevelLetter) + 1
         englishLevel.splice(numOfLevels)
     }
-
     if(funding) {
         queryObject.funding = funding
     }
-
-    console.log(queryObject)
-
     // END OF FILTERS
     
     if(!studentID) {
