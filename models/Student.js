@@ -79,34 +79,15 @@ const StudentSchema = new mongoose.Schema({
         enum: ["fully-funded", "partially-funded"],
         default: "fully-funded"
     },
-    personalStatement: {
-        type: String,
-    },
     currentResidency: {
-        type: String,
-    },
-    coverLetter: {
         type: String,
     },
     researchProposal: {
         type: String,
     },
-    extracurricularActivities: {
-        // here we can instruct the Student to type them with a "," in between each activity (for further processing / filtering)
-        type: String
-    },
-    highschoolDegree: {
-        type: mongoose.Types.ObjectId,
-        ref: 'highschool-degree',
-        // required: [true, 'please enter a highschool Degree']
-    },
     lastDegreeAcquired: {
-        type: mongoose.Types.ObjectId,
-        ref: 'degree',
-        degreeType: {
-            type: String,
-            enum: ["bachelors", "masters", "phd"]
-        }
+        type: String,
+        enum: ["highschool", "bachelor's", "master's", "phd"]
     }
 })
 
