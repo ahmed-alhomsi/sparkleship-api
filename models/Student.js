@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const Degree = require('./Degree')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
